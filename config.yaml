@@ -1,0 +1,57 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Cube — Default Configuration (Qwen3 0.6B, non-thinking)
+# ──────────────────────────────────────────────────────────────────────────────
+# All tunables live here. The application reads this file once at startup.
+# Paths are relative to the project root unless marked otherwise.
+
+# ── Wake Word ─────────────────────────────────────────────────────────────────
+wake_word_model: "hey_jarvis"          # Built-in openWakeWord model name.
+                                        # Swap to a custom "hey_cube" ONNX later.
+wake_threshold: 0.5                     # Detection confidence threshold (0-1).
+cooldown_seconds: 2.0                   # Ignore new triggers for this many seconds
+                                        # after a detection (prevents double-fire).
+
+# ── VAD / Endpointing ────────────────────────────────────────────────────────
+vad_silence_ms: 1000                    # Silence duration (ms) that ends the command.
+max_record_seconds: 10.0                # Hard cap on command recording length.
+
+# ── STT — whisper.cpp ────────────────────────────────────────────────────────
+whisper_binary: "./whisper.cpp/build/bin/whisper-cli"
+whisper_model_path: "./whisper.cpp/models/ggml-tiny.en.bin"
+
+# ── LLM — llama-server (OpenAI-compatible) ───────────────────────────────────
+llama_server_url: "http://127.0.0.1:8080"
+llama_context: 1024                     # -c value for stateless single-turn.
+thinking_mode: false                    # MUST be false for Qwen3 to avoid <think> blocks.
+system_prompt: >-
+  Answer in 1-2 short spoken sentences, plainly. /no_think
+max_tokens: 256
+
+# ── Conversation Memory ──────────────────────────────────────────────────────
+conversation_memory: false              # true = keep last N turns (raises context to 2048).
+memory_turns: 4                         # Number of user/assistant turn pairs to keep.
+
+# ── TTS — Piper ──────────────────────────────────────────────────────────────
+tts_voice: "en_US-lessac-low"           # Piper voice shorthand (auto-downloads on first use).
+
+# ── Audio ─────────────────────────────────────────────────────────────────────
+sample_rate: 16000                      # 16 kHz mono — required by whisper & openWakeWord.
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Gemma 3 1B fallback profile (copy & uncomment to switch models)
+# ══════════════════════════════════════════════════════════════════════════════
+# To use Gemma instead of Qwen3, update llama-server.service to point at the
+# Gemma GGUF, then uncomment the overrides below.
+#
+# llama_context: 1024
+# thinking_mode: false
+# system_prompt: >-
+#   Answer in 1-2 short spoken sentences, plainly.
+# max_tokens: 256
+#
+# NOTE: Gemma 3 1B is NOT a hybrid-reasoning model, so thinking_mode / /no_think
+#       are irrelevant — but keeping thinking_mode: false is harmless.
+# Confirm the exact GGUF filename on the Hugging Face Files tab:
+#   https://huggingface.co/bartowski/gemma-3-1b-it-GGUF
+#   e.g. gemma-3-1b-it-Q4_K_M.gguf

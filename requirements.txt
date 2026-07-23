@@ -1,0 +1,27 @@
+# Cube — Python dependencies
+# Install inside a venv:  python -m venv venv && ./venv/bin/pip install -r requirements.txt
+
+# Audio I/O
+sounddevice==0.5.1
+numpy==1.26.4
+
+# Wake-word detection
+openwakeword==0.6.0
+tflite-runtime==2.14.0          # lightweight TF-Lite backend for openWakeWord on ARM
+
+# Voice Activity Detection (endpointing)
+silero-vad==5.1.2
+torch==2.4.1                    # CPU-only is fine; silero-vad needs torch
+torchaudio==2.4.1               # required by silero-vad for audio tensor ops
+
+# TTS
+piper-tts==1.2.0
+
+# HTTP client (for llama-server streaming)
+requests==2.32.3
+
+# Config
+pyyaml==6.0.2
+
+# Audio file I/O
+soundfile==0.12.1

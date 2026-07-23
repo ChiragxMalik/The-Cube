@@ -1,0 +1,56 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# llama-server.service — Runs llama.cpp's llama-server for Cube.
+# ──────────────────────────────────────────────────────────────────────────────
+# Install:
+#   sudo cp systemd/llama-server.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now llama-server.service
+#
+# IMPORTANT: Confirm the exact GGUF filename on the Hugging Face Files tab.
+#   Qwen3 0.6B:  https://huggingface.co/Qwen/Qwen3-0.6B-GGUF
+#   Gemma 3 1B:  https://huggingface.co/bartowski/gemma-3-1b-it-GGUF
+# ──────────────────────────────────────────────────────────────────────────────
+
+[Unit]
+Description=llama.cpp inference server (Cube LLM backend)
+Documentation=https://github.com/ggml-org/llama.cpp
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/cube
+
+# ── Qwen3 0.6B (Q4_K_M) — NON-THINKING mode ─────────────────────────────
+# Confirm the exact filename — quant names vary between repos.
+ExecStart=/home/pi/llama.cpp/build/bin/llama-server \
+    --model /home/pi/models/Qwen3-0.6B-Q4_K_M.gguf \
+    --ctx-size 1024 \
+    --threads 4 \
+    --host 127.0.0.1 \
+    --port 8080 \
+    --no-mmap
+
+# ── Gemma 3 1B fallback (uncomment and comment the above) ────────────────
+# ExecStart=/home/pi/llama.cpp/build/bin/llama-server \
+#     --model /home/pi/models/gemma-3-1b-it-Q4_K_M.gguf \
+#     --ctx-size 1024 \
+#     --threads 4 \
+#     --host 127.0.0.1 \
+#     --port 8080 \
+#     --no-mmap
+
+Restart=on-failure
+RestartSec=5
+
+# Resource limits (Pi 4 — 4 GB)
+MemoryMax=2G
+Nice=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=llama-server
+
+[Install]
+WantedBy=multi-user.target

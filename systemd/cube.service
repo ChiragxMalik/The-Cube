@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# cube.service — Runs the Cube voice assistant pipeline.
+# ──────────────────────────────────────────────────────────────────────────────
+# Install:
+#   sudo cp systemd/cube.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now cube.service
+#
+# Depends on llama-server.service (must be running first).
+# ──────────────────────────────────────────────────────────────────────────────
+
+[Unit]
+Description=Cube offline voice assistant
+After=llama-server.service sound.target
+Requires=llama-server.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/cube
+
+# Run inside the project venv — do NOT use global Python (PEP 668)
+ExecStart=/home/pi/cube/venv/bin/python src/cube.py
+
+Restart=on-failure
+RestartSec=3
+
+# Allow access to audio devices
+SupplementaryGroups=audio
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cube
+
+# Graceful shutdown (SIGTERM → cube.py handles it)
+TimeoutStopSec=10
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

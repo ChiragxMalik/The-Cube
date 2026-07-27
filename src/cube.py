@@ -79,7 +79,7 @@ class CubePipeline:
         )
 
         self.wake_detector = WakeWordDetector(
-            model_name=config.get("wake_word_model", "hey_jarvis"),
+            model_name=config.get("wake_word_model", "hey_cube"),
             threshold=config.get("wake_threshold", 0.5),
             cooldown_seconds=config.get("cooldown_seconds", 2.0),
         )
@@ -200,6 +200,10 @@ class CubePipeline:
             llm_tts_ms,
             total_ms,
         )
+
+        # Flush audio buffered during STT+LLM+TTS (several seconds of stale
+        # data including Cube's own voice) before returning to the wake loop.
+        self.audio_stream.flush()
 
         # Reset for next wake word
         self.wake_detector.reset()

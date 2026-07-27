@@ -55,6 +55,12 @@ class EndpointDetector:
             max_record_seconds,
         )
 
+        # Silero VAD 5.x strictly requires exactly 512 samples at 16 kHz.
+        # The mic blocksize (1280) is different, so we buffer incoming audio
+        # and slice it into 512-sample windows before calling the model.
+        self._vad_frame_size: int = 512
+        self._vad_buffer: np.ndarray = np.array([], dtype=np.float32)
+
         # Recording state
         self._chunks: list[np.ndarray] = []
         self._recording_start: Optional[float] = None
@@ -88,13 +94,17 @@ class EndpointDetector:
             logger.info("EndpointDetector: hard cap reached (%.1f s)", elapsed)
             return True
 
-        # Run Silero VAD on this chunk
-        tensor = torch.from_numpy(audio_chunk).float()
-        speech_prob = self._model(tensor, self.sample_rate).item()
-
-        if speech_prob >= 0.5:
-            self._speech_detected = True
-            self._last_speech_time = now
+        # Buffer incoming audio and process in strict 512-sample windows.
+        # Silero VAD 5.x raises an error on any other chunk size at 16 kHz.
+        self._vad_buffer = np.concatenate([self._vad_buffer, audio_chunk])
+        while len(self._vad_buffer) >= self._vad_frame_size:
+            frame = self._vad_buffer[: self._vad_frame_size]
+            self._vad_buffer = self._vad_buffer[self._vad_frame_size :]
+            tensor = torch.from_numpy(frame).float()
+            speech_prob = self._model(tensor, self.sample_rate).item()
+            if speech_prob >= 0.5:
+                self._speech_detected = True
+                self._last_speech_time = now
 
         # Only trigger endpoint after we've seen some speech
         if self._speech_detected and self._last_speech_time is not None:
@@ -118,6 +128,7 @@ class EndpointDetector:
     def reset(self) -> None:
         """Clear accumulated audio and state for the next command."""
         self._chunks.clear()
+        self._vad_buffer = np.array([], dtype=np.float32)
         self._recording_start = None
         self._last_speech_time = None
         self._speech_detected = False

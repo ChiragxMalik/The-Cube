@@ -5,7 +5,7 @@
 # Paths are relative to the project root unless marked otherwise.
 
 # ── Wake Word ─────────────────────────────────────────────────────────────────
-wake_word_model: "hey_jarvis"          # Built-in openWakeWord model name.
+wake_word_model: "hey_cube"            # Built-in openWakeWord model name.
                                         # Swap to a custom "hey_cube" ONNX later.
 wake_threshold: 0.5                     # Detection confidence threshold (0-1).
 cooldown_seconds: 2.0                   # Ignore new triggers for this many seconds

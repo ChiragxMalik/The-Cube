@@ -43,7 +43,8 @@ def transcribe(
         "-l", language,
         "--no-timestamps",       # plain text output
         "-t", "4",               # threads (Pi 4 has 4 cores)
-        "--print-special", "false",
+        # Note: --print-special is a bare toggle (no value). Default is off,
+        # so we simply omit it rather than passing "false" as a positional arg.
     ]
 
     logger.info("STT command: %s", " ".join(cmd))

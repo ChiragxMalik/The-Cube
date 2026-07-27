@@ -100,9 +100,9 @@ class TTSSpeaker:
                     "--model", self.voice,
                     "--output-raw",
                 ],
-                input=text,
+                input=text.encode("utf-8"),   # must be bytes when text=False
                 capture_output=True,
-                text=False,               # binary stdout for raw audio
+                text=False,                   # binary stdout for raw audio
                 timeout=30,
             )
         except FileNotFoundError:
@@ -137,8 +137,15 @@ class TTSSpeaker:
             logger.warning("Piper returned empty audio for: '%s'", text[:40])
             return None, 0
 
-        # Piper --output-raw produces 16-bit signed LE PCM at 16 kHz (for low quality voices)
-        # or 22050 Hz for medium/high. We use the low voice, so 16000 Hz.
+        # Piper --output-raw produces 16-bit signed LE PCM.
+        # -low voices are 16 kHz; -medium/-high are 22050 Hz.
+        # Switching voice without updating this causes wrong pitch/speed.
+        if not self.voice.endswith("-low"):
+            logger.warning(
+                "Voice '%s' may not be 16 kHz. Only -low voices are tested. "
+                "Use TTSSpeakerWav instead for correct sample-rate detection.",
+                self.voice,
+            )
         sample_rate = 16000
         audio_int16 = np.frombuffer(raw_audio, dtype=np.int16)
         audio_float32 = audio_int16.astype(np.float32) / 32768.0
